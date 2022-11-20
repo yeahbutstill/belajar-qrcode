@@ -11,21 +11,22 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.EnumMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GenerateQRCode {
 
-    private static final String logoPath = "src/main/resources/logo.png";
-    private static final Integer productNumberLength = 6;
-    private static final Integer productCodeLength = 2;
-    private static final Integer qrCodeSize = 300;
+    private static final String LOGOPATH = "src/main/resources/duke.png";
+    private static final Integer PRDUCTNUMLENG = 6;
+    private static final Integer PRDUCTCODELENG = 2;
+    private static final Integer QRCODESIZE = 1400;
 
     public static void main(String[] args) throws Exception {
-        
-        Integer productCodesQty = 20;
+
+        Integer productCodesQty = 10;
         String productionYear = "22";
-        Integer productQuantity = 10000;
+        Integer productQuantity = 5;
 
         for(int i = 0; i<productCodesQty; i++){
             generateQrForProduct(productionYear, i+1, productQuantity);
@@ -35,32 +36,33 @@ public class GenerateQRCode {
     public static void generateQrForProduct(
             String productionYear, Integer productCode, Integer productQuantity)
             throws Exception {
-        
-        String strProductCode = String
-                                .format("%1$" + productCodeLength + "s", productCode)
-                                .replace(' ', '0');
 
-        System.out.println("--- Generating QR Code for Product Code "+strProductCode+" ---");
+        Logger logger = Logger.getLogger(GenerateQRCode.class.getName());
+        String strProductCode = String
+                .format("%1$" + PRDUCTCODELENG + "s", productCode)
+                .replace(' ', '0');
+
+        logger.log(Level.INFO, "--- Generating QR Code for Product Code "+strProductCode+" ---");
 
         String folderOutput = "target/qrcode/"+strProductCode;
         new File(folderOutput).mkdirs();
 
         for (int i = 1; i <= productQuantity; i++) {
-                String productNumber = strProductCode + productionYear
-                        + String.format("%1$" + productNumberLength + "s", i)
-                        .replace(' ', '0');
-                System.out.println("Generate QR Code for product number "+productNumber);
-                BufferedImage qrCode = generateQRCodeImage(productNumber, qrCodeSize);
-                BufferedImage qrWithLogo = pasangLogo(qrCode, logoPath);
-                ImageIO.write(qrWithLogo, "png",
-                        new File(folderOutput+File.separator
-                                +productNumber + ".png"));
+            String productNumber = strProductCode + productionYear
+                    + String.format("%1$" + PRDUCTNUMLENG + "s", i)
+                    .replace(' ', '0');
+            logger.log(Level.INFO, "Generate QR Code for product number "+productNumber);
+            BufferedImage qrCode = generateQRCodeImage(productNumber, QRCODESIZE);
+            BufferedImage qrWithLogo = pasangLogo(qrCode, LOGOPATH);
+            ImageIO.write(qrWithLogo, "png",
+                    new File(folderOutput+File.separator
+                            +productNumber + ".png"));
         }
-        
+
     }
 
     public static BufferedImage generateQRCodeImage(String barcodeText, Integer size) throws Exception {
-        Map<EncodeHintType, ErrorCorrectionLevel> hints = new HashMap<>();
+        EnumMap<EncodeHintType, ErrorCorrectionLevel> hints = new EnumMap<>(EncodeHintType.class);
         hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
         QRCodeWriter barcodeWriter = new QRCodeWriter();
         BitMatrix bitMatrix =
@@ -69,14 +71,14 @@ public class GenerateQRCode {
                         size, size, hints);
         BufferedImage qrCode = MatrixToImageWriter.toBufferedImage(bitMatrix);
 
-        int startingYposition = size-2;
+        int startingYposition = size-40;
 
         Graphics2D g = (Graphics2D) qrCode.getGraphics();
-        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 40));
-        Color textColor = Color.BLACK;
+        g.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 100));
+        Color textColor = Color.RED;
         g.setColor(textColor);
         FontMetrics fm = g.getFontMetrics();
-        g.drawString(barcodeText, (qrCode.getWidth() / 2)   - (fm.stringWidth(barcodeText) / 2), startingYposition);
+        g.drawString(barcodeText, (qrCode.getWidth() / 2) - (fm.stringWidth(barcodeText) / 2), startingYposition);
         return qrCode;
     }
 
@@ -94,8 +96,8 @@ public class GenerateQRCode {
         g.drawImage(qrImage, 0, 0, null);
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
         g.drawImage(logo,
-                (int) Math.round(deltaWidth / 2),
-                (int) Math.round(deltaHeight / 2),
+                Math.round(deltaWidth / 2f),
+                Math.round(deltaHeight / 2f),
                 null);
         return combined;
     }
